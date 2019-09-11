@@ -184,7 +184,8 @@ define(['require',
                     url: 'rest/cluster/masters/' + $scope.getLabel(master.location) + '/workers/',
                     data: {
                         workerURL: worker.location,
-                        masterLocation: getLocation(master)
+                        masterLocation: getLocation(master),
+                        workerLocation: getLocation(worker)
                     },
                     method: 'POST'
                 }).success(function()  {
@@ -353,7 +354,7 @@ define(['require',
                 });
             };
 
-            $scope.addOrUpdateLink = function (source, target, status, timestamp) {
+            $scope.addOrUpdateLink = function (source, target, status, timestamp, errorMsg) {
                 var key = source.location + '|' + target.location;
                 var link = $scope.linksHash[key];
                 var reverseKey = target.location + '|' + source.location;
@@ -372,6 +373,9 @@ define(['require',
                 }
                 link['status'] = status;
                 link['timestamp'] = timestamp;
+                if (errorMsg !== null) {
+                    link['errorMsg'] = errorMsg;
+                }
 
                 link['reversePeerMissing'] = source.repositoryType === 'master' && target.repositoryType === 'master' && !reverseLink;
                 if (reverseLink && reverseLink['reversePeerMissing']) {
@@ -504,6 +508,10 @@ define(['require',
                             }
 
                             var status = worker.status;
+                            var errorMsg;
+                            if (status === 'OFF') {
+                                errorMsg = worker.errorMsg;
+                            }
 
                             // debug stuff
                             if (isRandomLink) {
@@ -512,7 +520,7 @@ define(['require',
                             }
                             // end of debug stuff
 
-                            $scope.addOrUpdateLink(node, $scope.urlToNode[worker.location], status, timestamp);
+                            $scope.addOrUpdateLink(node, $scope.urlToNode[worker.location], status, timestamp, errorMsg);
                         });
                     }).catch(function () {
                         return true;
